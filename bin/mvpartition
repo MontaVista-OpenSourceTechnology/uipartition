@@ -1,0 +1,81 @@
+#!/usr/bin/python
+#
+#    mvpartition - A disk partitions/RAID/LVM setup tool
+#    Copyright (C) 2010-2015  MontaVista Software, LLC
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#      Boston, MA  02110-1301  USA
+
+import sys
+import curses
+
+try:
+    import mvpartition.Partitioner
+except:
+    sys.stderr.write("abort: couldn't find mvpartition libraries in [%s]\n" %
+                     ' '.join(sys.path))
+    sys.stderr.write("(check your install and PYTHONPATH)\n")
+    sys.exit(-1)
+    pass
+
+output_fstab = None
+input_fstab = "/etc/fstab"
+
+def run_partitioner(stdscr):
+    p = mvpartition.Partitioner.Partitioner(stdscr, output_fstab=output_fstab)
+    e = mvpartition.Partitioner._add_disks(p, input_fstab)
+    if (e):
+        p.popupWin(e)
+    else:
+        p.sc.refresh()
+        pass
+
+    while (not p.done):
+        c = stdscr.getch()
+        p.handleCharRaw(c)
+        p.sc.refresh()
+        pass
+    return
+
+for i in sys.argv[1:]:
+    if (output_fstab == ""):
+        output_fstab = i
+        continue
+    if (input_fstab == ""):
+        input_fstab = i
+        continue
+
+    if i == "--output-fstab":
+        output_fstab = "" # Mark for next iteration
+        pass
+    elif i == "--input-fstab":
+        input_fstab = "" # Mark for next iteration
+        pass
+    else:
+        sys.stderr.write("Unknown parameter: %s\n" % i);
+        sys.exit(1)
+        pass
+    pass
+
+if (output_fstab == ""):
+    sys.stderr.write("No parameter given to --output-fstab\n");
+    sys.exit(1)
+    pass
+if (input_fstab == ""):
+    sys.stderr.write("No parameter given to --input-fstab\n");
+    sys.exit(1)
+    pass
+
+curses.wrapper(run_partitioner)
