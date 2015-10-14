@@ -34,14 +34,9 @@ output_fstab = None
 input_fstab = "/etc/fstab"
 
 def run_partitioner(stdscr):
-    p = UIpartition.Partitioner.Partitioner(stdscr, output_fstab=output_fstab)
-    e = UIpartition.Partitioner._add_disks(p, input_fstab)
-    if (e):
-        p.popupWin(e)
-    else:
-        p.sc.refresh()
-        pass
-
+    p = UIpartition.Partitioner.Partitioner(stdscr,
+                                            input_fstab=input_fstab,
+                                            output_fstab=output_fstab)
     while (not p.done):
         c = stdscr.getch()
         p.handleCharRaw(c)
