@@ -332,7 +332,16 @@ class XFSFS(FSType):
 
     pass
 
-_fs_types = [ FSType(), Ext4FS(), Ext3FS(), Ext2FS(), XFSFS() ]
+class VFATFS(FSType):
+    name = "vfat"
+    file_str = "mkdosfs"
+    
+    def newInst(self):
+        return VFATFS()
+
+    pass
+
+_fs_types = [ FSType(), Ext4FS(), Ext3FS(), Ext2FS(), XFSFS(), VFATFS() ]
 
 def _valid_filesystem(f):
     for t in _fs_types[1:]:
