@@ -37,6 +37,7 @@ import copy
 import DebugLog
 import subprocess
 import tempfile
+import os
 
 import sys
 import traceback
@@ -1678,7 +1679,17 @@ class Disk(LineEntry, PartitionOwner):
         elif (c == "I"):
             identity = None
             try:
-                out = _call_cmd(("/lib/udev/scsi_id", "--whitelisted",
+                if (os.path.exists("/lib/udev/scsi_id")):
+                    scsi_id = "/lib/udev/scsi_id"
+                elif (os.path.exists("/lib64/udev/scsi_id")):
+                    scsi_id = "/lib64/udev/scsi_id"
+                elif (os.path.exists("/lib32/udev/scsi_id")):
+                    scsi_id = "/lib32/udev/scsi_id"
+                else:
+                    identity = "\nUnable to find scsi_id cmd, so no info"
+                    raise CmdErr(None, None, None, None)
+
+                out = _call_cmd((scsi_id, "--whitelisted",
                                  "--export", self.devname))
                 out = out.split("\n")
                 identity = ""
