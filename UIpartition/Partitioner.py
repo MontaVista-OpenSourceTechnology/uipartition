@@ -325,7 +325,7 @@ class Ext4FS(FSType):
 
 class XFSFS(FSType):
     name = "xfs"
-    file_str = "xfs filesystem"
+    file_str = "XFS filesystem"
     opts = [ "-f", ]
     
     def newInst(self):
