@@ -2756,7 +2756,7 @@ def _add_disks(p, input_fstab):
                 pass
             elif (found):
                 if (len(w) < 7):
-                    break
+                    continue
                 if (w[6].startswith("/dev/md/")):
                     # In case /dev/md/x ends up in the raid detail
                     dobj = p.findObj("/dev/md" + w[6].rsplit("/", 1)[1])
@@ -2922,18 +2922,18 @@ class Partitioner:
         errs = ""
         if (input_fstab):
             try:
-                infstab = open(input_fstab)
+                infstab = open(input_fstab, "r")
             except Exception, e:
-                errs = "Unable to process fstab %s: %s" % (input_fstab, str(e))
+                errs = "Unable to open fstab %s: %s" % (input_fstab, str(e))
                 pass
-            pass
-        if (infstab):
-            infstab.close()
             pass
 
         self.linepos = 0
         self.colpos = 0
         errs += self.initInfo(infstab)
+        if (infstab):
+            infstab.close()
+            pass
         if (errs):
             self.popupWin(errs)
             pass
