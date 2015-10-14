@@ -2405,7 +2405,7 @@ class LVMVG(LineEntry):
         try:
             numsects = p.units.convFromStr(p, self, vals[1])
         except Exception, e:
-            p.popupWin("Size '" + strip(vals[1])
+            p.popupWin("Size '" + vals[1].strip()
                        + "' was not a valid number, please"
                        + " try again",
                        self.continueEdit, o)
