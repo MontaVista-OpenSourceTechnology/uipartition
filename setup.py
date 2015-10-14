@@ -1,5 +1,5 @@
 #
-#    mvpartition - A disk partitions/RAID/LVM setup tool
+#    uipartition - A disk partitions/RAID/LVM setup tool
 #    Copyright (C) 2010-2015  MontaVista Software, LLC
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -18,12 +18,12 @@
 #      Boston, MA  02110-1301  USA
 
 from distutils.core import setup
-setup(name='mvpartition',
-      version='0.1',
-      description='MontaVista Disk Partitioner',
+setup(name='uipartition',
+      version='1.0',
+      description='User Interface Disk Partitioner',
       author='MontaVista Software, LLC',
-      author_email='source@mvista.com',
+      author_email='akuster@mvista.com',
       url="http://www.mvista.com",
-      packages=['mvpartition'],
-      scripts=['bin/mvpartition']
+      packages=['UIpartition'],
+      scripts=['bin/uipartition']
       )

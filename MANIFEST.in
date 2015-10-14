@@ -1,2 +1,2 @@
 include README COPYING MANIFEST.in
-recursive-include mvpartition *.py
+recursive-include uipartition *.py

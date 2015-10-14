@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#    mvpartition - A disk partitions/RAID/LVM setup tool
+#    uipartition - A disk partitions/RAID/LVM setup tool
 #    Copyright (C) 2010-2015  MontaVista Software, LLC
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -22,9 +22,9 @@ import sys
 import curses
 
 try:
-    import mvpartition.Partitioner
+    import UIpartition.Partitioner
 except:
-    sys.stderr.write("abort: couldn't find mvpartition libraries in [%s]\n" %
+    sys.stderr.write("abort: couldn't find uipartition libraries in [%s]\n" %
                      ' '.join(sys.path))
     sys.stderr.write("(check your install and PYTHONPATH)\n")
     sys.exit(-1)
@@ -34,8 +34,8 @@ output_fstab = None
 input_fstab = "/etc/fstab"
 
 def run_partitioner(stdscr):
-    p = mvpartition.Partitioner.Partitioner(stdscr, output_fstab=output_fstab)
-    e = mvpartition.Partitioner._add_disks(p, input_fstab)
+    p = UIpartition.Partitioner.Partitioner(stdscr, output_fstab=output_fstab)
+    e = UIpartition.Partitioner._add_disks(p, input_fstab)
     if (e):
         p.popupWin(e)
     else:

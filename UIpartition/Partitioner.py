@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#    mvpartition - A disk partitions/RAID/LVM setup tool
+#    uipartition - A disk partitions/RAID/LVM setup tool
 #    Copyright (C) 2010-2015  MontaVista Software, LLC
 #
 #    This program is free software; you can redistribute it and/or modify
