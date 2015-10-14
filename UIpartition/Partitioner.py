@@ -1519,7 +1519,9 @@ class PartitionOwner:
             pass
 
         # Remove it from whatever it belongs to.
-        part.dest.shutdown(p)
+        if (part.dest):
+            part.dest.shutdown(p)
+            pass
 
         line = p.lineOf(0, self)
 
