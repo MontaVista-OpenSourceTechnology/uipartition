@@ -3242,7 +3242,7 @@ class Partitioner:
         return
 
     def _drawCurrInfo(self):
-        s = "MontaVista Partition/RAID/LVM Manager"
+        s = "OE Partition/RAID/LVM Manager"
         self.status_in_footer = False
         if (self.align_opt):
             v = "Opt"
@@ -3443,14 +3443,14 @@ class Partitioner:
 
     pass
 
-_help_text = """               MontaVista Partition/RAID/LVM Management
+_help_text = """               OE Partition/RAID/LVM Management
                ----------------------------------------
 
 Note: Press "Enter" to leave this help.
 
-Welcome to the MontaVista Partition/RAID/LVM Management tool.  This
+Welcome to the OE Partition/RAID/LVM Management tool.  This
 tool allows you to partition the disks, add RAIDs and LVMs, and set up
-filesystems and swap devices for a MontaVista Linux system you are
+filesystems and swap devices for a OE Linux system you are
 about to install onto a target.
 
 The tool has a top line of labels for the columns below and a status
