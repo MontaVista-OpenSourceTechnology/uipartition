@@ -18,7 +18,7 @@
 #      Boston, MA  02110-1301  USA
 
 import curses
-import DebugLog
+from . import DebugLog
 
 class PopupEditVals:
     # Create a popup window at the given y,x position, each line

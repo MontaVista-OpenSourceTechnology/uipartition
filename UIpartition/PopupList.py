@@ -18,8 +18,8 @@
 #      Boston, MA  02110-1301  USA
 
 import curses
-import FlexScrollColumn
-import DebugLog
+from . import FlexScrollColumn
+from . import DebugLog
 
 class PopupList:
     def __init__(self, parent, y, x, list, curr,

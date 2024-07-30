@@ -19,7 +19,7 @@
 #      Boston, MA  02110-1301  USA
 
 import curses
-import DebugLog
+from . import DebugLog
 
 # FlexScrollPad raises these when the user passes in bogus data.
 class FlexScrollPadErr(Exception):

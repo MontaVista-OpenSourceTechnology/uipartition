@@ -27,14 +27,14 @@
 # DebugLog.debuglog._log("A: ")
 
 import curses
-import FlexScrollPad
-import FlexScrollColumn
-import CursesKeyMap
-import Popup
-import PopupEditVals
-import PopupList
+from . import FlexScrollPad
+from . import FlexScrollColumn
+from . import CursesKeyMap
+from . import Popup
+from . import PopupEditVals
+from . import PopupList
 import copy
-import DebugLog
+from . import DebugLog
 import subprocess
 import tempfile
 import os
@@ -1473,7 +1473,7 @@ class PartitionOwner:
                              ["mkpart extended %d %d"
                               % (o.sectstart,
                                  o.sectstart + o.numsects - 1),])
-            except CmdErr, e:
+            except CmdErr as e:
                 if ("Error informing the kernel" in e.out):
                     kernel_update_worked = False
                 else:
@@ -1486,7 +1486,7 @@ class PartitionOwner:
                               % (self.subpartitions,
                                  o.sectstart,
                                  o.sectstart + o.numsects - 1),])
-            except CmdErr, e:
+            except CmdErr as e:
                 if ("Error informing the kernel" in e.out):
                     kernel_update_worked = False
                 else:
@@ -1706,7 +1706,7 @@ class Disk(LineEntry, PartitionOwner):
                         pass
                     pass
                 pass
-            except CmdErr, e:
+            except CmdErr as e:
                 pass
             return self.printInfo(p, extra=identity)
         else:
@@ -2115,7 +2115,7 @@ class RAID(LineEntry, PartitionOwner):
                         pass
                     ser.append(cid)
                     pass
-                except CmdErr, e:
+                except CmdErr as e:
                     ser.append("")
                     pass
                 pass
@@ -2427,7 +2427,7 @@ class LVMVG(LineEntry):
 
         try:
             numsects = p.units.convFromStr(p, self, vals[1])
-        except Exception, e:
+        except Exception as e:
             p.popupWin("Size '" + vals[1].strip()
                        + "' was not a valid number, please"
                        + " try again",
@@ -2528,7 +2528,7 @@ def _disk_info_from_fdisk(d):
 def _disk_info(d):
     try:
         o = _call_parted(d, ["print",])
-    except CmdErr, e:
+    except CmdErr as e:
         (numsects, sectsize, err) = _disk_info_from_fdisk(d)
         if (err):
             return (0, 0, None, None, err)
@@ -2727,7 +2727,7 @@ def _add_disks(p, input_fstab):
     raids = []
     try:
         f = open("/proc/diskstats")
-    except Exception, e:
+    except Exception as e:
         startup_errs += "Unable to open /proc/diskstats: " + str(e)
         return startup_errs
 
@@ -2751,7 +2751,7 @@ def _add_disks(p, input_fstab):
             l = f.readline()
             pass
         pass
-    except Exception, e:
+    except Exception as e:
         pass
 
     # For each disk, query it from parted to get the size of each cylinder
@@ -2999,7 +2999,7 @@ class Partitioner:
         if (input_fstab):
             try:
                 infstab = open(input_fstab, "r")
-            except Exception, e:
+            except Exception as e:
                 errs = "Unable to open fstab %s: %s" % (input_fstab, str(e))
                 pass
             pass
@@ -3117,11 +3117,11 @@ class Partitioner:
     def handleChar(self, c):
         try:
             self._handleChar(c)
-        except PartitionerErr, e:
+        except PartitionerErr as e:
             self.popupWin(str(e))
-        except CmdErr, e:
+        except CmdErr as e:
             self.popupWin(str(e))
-        except Exception, e:
+        except Exception as e:
             (t, v, tb) = sys.exc_info()
             self.popupWin(str(e) + "\n" + "\n".join(traceback.format_tb(tb)))
             pass
@@ -3310,7 +3310,7 @@ class Partitioner:
             for d in self.disks + self.raids:
                 try:
                     _reread_partition_table(d)
-                except CmdErr, e:
+                except CmdErr as e:
                     pass
                 pass
             pass

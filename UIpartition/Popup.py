@@ -19,8 +19,8 @@
 #      Boston, MA  02110-1301  USA
 
 import curses
-import DebugLog
-import FlexScrollPad
+from . import DebugLog
+from . import FlexScrollPad
 
 # Break into lines that fit in the number of columns given
 def _breakupLine(s, ncols):
@@ -56,7 +56,7 @@ def _breakupLine(s, ncols):
     
 if __name__== '__main__':
     l = _breakupLine("asdf asdf asdf asdf asdf asdf asdf", 10)
-    print l
+    print(l)
 
 class Popup:
     # FIXME - If #line > displaylines, need to make this scrollable

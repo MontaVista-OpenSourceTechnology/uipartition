@@ -19,8 +19,8 @@
 #      Boston, MA  02110-1301  USA
 
 import curses
-import FlexScrollPad
-import DebugLog
+from . import FlexScrollPad
+from . import DebugLog
 
 # FlexScrollColumn raises these when the user passes in bogus data.
 class FlexScrollColumnErr(Exception):
