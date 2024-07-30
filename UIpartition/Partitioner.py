@@ -41,6 +41,7 @@ import os
 
 import sys
 import traceback
+import json
 
 # Dummy object for passing around info
 class Obj:
@@ -78,23 +79,20 @@ class CmdErr(Exception):
 
     pass
 
-def _splitup_parted_line(l):
-    w = l.split(";")
-    w = w[0].split(":")
-    return w
-
 def _call_cmd(cmd):
     prog = subprocess.Popen(cmd,
                             stdin=None, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, close_fds=True)
     (out, err) = prog.communicate()
+    out = out.decode("utf8")
+    err = err.decode("utf8")
     if (prog.returncode != 0):
         raise CmdErr(str(cmd), prog.returncode, out, err)
     return out
 
 # Default unit is sectors
 def _call_parted(dev, cmds, unit="s"):
-    return _call_cmd(["parted", "-ms", "--align=none", dev, "unit " + unit]
+    return _call_cmd(["parted", "-msj", "--align=none", dev, "unit " + unit]
                      + cmds)
     
 def _call_mdadm(dev, cmd, opts=[]):
@@ -2509,7 +2507,9 @@ def _disk_info_from_fdisk(d):
     prog = subprocess.Popen(("fdisk", d),
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, close_fds=True)
-    (out, err) = prog.communicate("p\nq\n")
+    (out, err) = prog.communicate(bytes("p\nq\n".encode("utf8")))
+    out = out.decode("utf8")
+    err = err.decode("utf8")
     if (prog.returncode != 0):
         return (None, None, err)
     l = out.split("\n")
@@ -2533,15 +2533,14 @@ def _disk_info(d):
         if (err):
             return (0, 0, None, None, err)
         return (numsects, sectsize, None, None, None)
-    lines = o.split("\n")
-    w = _splitup_parted_line(lines[1])
-    sectsize = int(w[3])
-    numsects = int(w[1].rstrip("s"))
-    if (w[5] == "msdos"):
+    j = json.load(o)
+    sectsize = int(j["logical-sector-size"])
+    numsects = int(j["size"].rstrip("s"))
+    if (j["label"] == "msdos"):
         tabletype = MBRPartitionTable()
-    elif (w[5] == "gpt"):
+    elif (j["label"] == "gpt"):
         tabletype = GUIDPartitionTable()
-    elif (w[5] == "loop"):
+    elif (j["label"] == "loop"):
         # It appears, at least on MD devices, that a device without
         # a partition table directly used for a filesytem appears
         # as "loop".  Don't process partitions.
@@ -2552,7 +2551,7 @@ def _disk_info(d):
         # Don't attempt to process the partitions.
         lines = None
         pass
-    return (numsects, sectsize, tabletype, lines, None)
+    return (numsects, sectsize, tabletype, j["partitions"], None)
 
 def _process_dev_by_contents(name):
     i = _get_file_info(name)
@@ -2593,25 +2592,16 @@ def _process_dev_by_fstab(name, fstab_info, realdevname=None):
         pass
     return dest
 
-def _process_partitions(p, device, lines, devname, split, tabletype,
+def _process_partitions(p, device, partitions, devname, split, tabletype,
                         fstab_info):
     line = p.lineOf(0, device) + 1
     extended = None
-    lw = []
-    for l in lines[2:]:
-        if (len(l) == 0):
-            break
-        w = _splitup_parted_line(l)
-        lw.append(w)
-        pass
-
-    lw.sort()
-    for w in lw:
-        name = devname + split + w[0]
-        num = int(w[0])
-        sectstart = int(w[1].rstrip("s"))
-        numsects = int(w[2].rstrip("s")) - sectstart + 1
-        if (w[7] == "extended"):
+    for p in partitions:
+        name = devname + split + p["number"]
+        num = int(p["number"])
+        sectstart = int(p["start"].rstrip("s"))
+        numsects = int(p["end"].rstrip("s")) - sectstart + 1
+        if (p["type"] == "extended"):
             extended = ExtendedPartition(p, device, name, num,
                                          line, sectstart, numsects)
             line += 1
@@ -2629,7 +2619,7 @@ def _process_partitions(p, device, lines, devname, split, tabletype,
             dest = _process_dev_by_fstab(name, fstab_info)
             if (dest):
                 pass
-            elif (w[4].startswith("linux-swap")):
+            elif p["type-id"] == "0x82":
                 # A swap partition
                 dest = _alloc_dest("swap", do_init=False)
             else:
@@ -2638,25 +2628,26 @@ def _process_partitions(p, device, lines, devname, split, tabletype,
                 dest = None
                 pass
 
-            flags = w[6].split(" ,")
-            for f in flags:
-                if (f == "boot"):
-                    boot = True
-                    pass
-                if (dest is not None):
-                    pass
-                elif (f == "raid"):
-                    dest = _alloc_dest("RAID", do_init=False)
-                elif (f == "lvm"):
-                    dest = _alloc_dest("LVM", do_init=False)
-                elif (f == "diag"):
-                    # What is this?
-                    pass
-                elif (f == "swap"):
-                    dest = _alloc_dest("swap", do_init=False)
-                    pass
-                else:
-                    dest = _process_dev_by_contents(name)
+            if "flags" in p:
+                for i in p["flags"]:
+                    if (f == "boot"):
+                        boot = True
+                        pass
+                    if (dest is not None):
+                        pass
+                    elif (f == "raid"):
+                        dest = _alloc_dest("RAID", do_init=False)
+                    elif (f == "lvm"):
+                        dest = _alloc_dest("LVM", do_init=False)
+                    elif (f == "diag"):
+                        # What is this?
+                        pass
+                    elif (f == "swap"):
+                        dest = _alloc_dest("swap", do_init=False)
+                        pass
+                    else:
+                        dest = _process_dev_by_contents(name)
+                        pass
                     pass
                 pass
             part = Partition(p, parent, name, num,
@@ -2757,7 +2748,7 @@ def _add_disks(p, input_fstab):
     # For each disk, query it from parted to get the size of each cylinder
     # and the partitions.
     for d in disks:
-        (numsects, sectsize, tabletype, lines, err) = _disk_info(d)
+        (numsects, sectsize, tabletype, partitions, err) = _disk_info(d)
 
         if (err is not None):
             startup_errs += err + "\n"
@@ -2769,10 +2760,10 @@ def _add_disks(p, input_fstab):
 
         disk = Disk(p, d, numsects, sectsize, tabletype)
 
-        if (lines is None):
+        if (partitions is None):
             continue
 
-        _process_partitions(p, disk, lines, d, "", tabletype, fstab_info)
+        _process_partitions(p, disk, partitions, d, "", tabletype, fstab_info)
         pass
 
     # Now handle the raids.
@@ -2813,12 +2804,12 @@ def _add_disks(p, input_fstab):
             continue
 
         if (level != "inactive"):
-            (numsects, sectsize, tabletype, dlines, err) = _disk_info(r)
+            (numsects, sectsize, tabletype, dpartitions, err) = _disk_info(r)
         else:
             numsects = 0
             sectsize = 0
             tabletype = None
-            dlines = None
+            dpartitions = None
             err = None
             pass
 
@@ -2859,8 +2850,9 @@ def _add_disks(p, input_fstab):
             raid.addVolInit(dobj)
             pass
 
-        if (dlines is not None):
-            _process_partitions(p, raid, dlines, r, "p", tabletype, fstab_info)
+        if (dpartitions is not None):
+            _process_partitions(p, raid, dpartitions, r, "p", tabletype,
+                                fstab_info)
             pass
         pass
 

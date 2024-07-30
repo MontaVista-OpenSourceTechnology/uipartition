@@ -82,7 +82,7 @@ class Popup:
             
         wlines = nlines - 2
         if (len(lines) < wlines):
-            y += (wlines / 2) - (len(lines) / 2)
+            y += int(wlines / 2) - int(len(lines) / 2)
             wlines = len(lines)
             nlines = wlines
             pass
