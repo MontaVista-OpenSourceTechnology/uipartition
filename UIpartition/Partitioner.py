@@ -286,6 +286,8 @@ class FSType(DestSubtype):
         p.redraw()
         p.popupInfo("Making %s filesystem on %s" % (self.name, device.devname))
 
+        # Make sure the existing filesystem check doesn't fail the mkfs
+        _call_cmd(["dd", "if=/dev/zero", "of=" + device.devname, "count=100"])
         _call_cmd(["mkfs." + self.name,] + self.opts + [device.devname, ])
         return
 
@@ -2511,7 +2513,7 @@ def _disk_info_from_fdisk(d):
     prog = subprocess.Popen(("fdisk", d),
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, close_fds=True)
-    (out, err) = prog.communicate(bytes("p\nq\n".encode("utf8")))
+    (out, err) = prog.communicate(bytes("\np\nq\n".encode("utf8")))
     out = out.decode("utf8")
     err = err.decode("utf8")
     if (prog.returncode != 0):
@@ -2523,7 +2525,7 @@ def _disk_info_from_fdisk(d):
             w = l[i].split()
             diskbytesize = int(w[4])
             w = l[i+2].split()
-            sectsize = int(w[6])
+            sectsize = int(w[5])
             numsects = diskbytesize / sectsize
             return (numsects, sectsize, None)
         pass
