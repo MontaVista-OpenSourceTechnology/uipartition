@@ -129,7 +129,7 @@ class Units:
         if (self.divider < 10000):
             s = str(val / self.divider) + self.unitdisplay
         else:
-            s = (str(val / self.divider)
+            s = (str(int(val / self.divider))
                  + '.' + ("%2.2d" % (val / (self.divider / 100)))[-2:]
                  + self.unitdisplay)
             pass
@@ -2085,6 +2085,7 @@ class RAID(LineEntry, PartitionOwner):
         if (level == "raid1"):
             if (len(self.vols) == 0):
                 return
+            level = "1"
             pass
         elif (level == "multipath"):
             if (len(self.vols) < 2):
@@ -2162,8 +2163,11 @@ class RAID(LineEntry, PartitionOwner):
             # grub does not support anything but 0.90 RAID metadata
             # so we are stuck with that.
             #  "--metadata=1.2",
+            level = self.level
+            if level == "raid1":
+                level = "1"
             _call_mdadm(self.devname, "--create",
-                        ["--force", "--level=%s" % str(self.level),
+                        ["--force", "--level=%s" % str(level),
                          "--metadata=0.90", "--run", "--raid-devices=1",
                          vol.devname])
             self.running = True
@@ -2533,7 +2537,7 @@ def _disk_info(d):
         if (err):
             return (0, 0, None, None, err)
         return (numsects, sectsize, None, None, None)
-    j = json.load(o)
+    j = json.loads(o)["disk"]
     sectsize = int(j["logical-sector-size"])
     numsects = int(j["size"].rstrip("s"))
     if (j["label"] == "msdos"):
@@ -2596,12 +2600,12 @@ def _process_partitions(p, device, partitions, devname, split, tabletype,
                         fstab_info):
     line = p.lineOf(0, device) + 1
     extended = None
-    for p in partitions:
-        name = devname + split + p["number"]
-        num = int(p["number"])
-        sectstart = int(p["start"].rstrip("s"))
-        numsects = int(p["end"].rstrip("s")) - sectstart + 1
-        if (p["type"] == "extended"):
+    for part in partitions:
+        name = devname + split + str(part["number"])
+        num = int(part["number"])
+        sectstart = int(part["start"].rstrip("s"))
+        numsects = int(part["end"].rstrip("s")) - sectstart + 1
+        if (part["type"] == "extended"):
             extended = ExtendedPartition(p, device, name, num,
                                          line, sectstart, numsects)
             line += 1
@@ -2619,18 +2623,29 @@ def _process_partitions(p, device, partitions, devname, split, tabletype,
             dest = _process_dev_by_fstab(name, fstab_info)
             if (dest):
                 pass
-            elif p["type-id"] == "0x82":
+            elif "type-id" in part and part["type-id"] == "0x82":
                 # A swap partition
                 dest = _alloc_dest("swap", do_init=False)
+            elif "type-uuid" in part:
+                # https://en.wikipedia.org/wiki/GUID_Partition_Table#Partition_type_GUIDs
+                if part["type-uuid"] == "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F":
+                    # A swap partition
+                    dest = _alloc_dest("swap", do_init=False)
+                elif part["type-uuid"] == "A19D880F-05FC-4D3B-A006-743F0F84911E":
+                    dest = _alloc_dest("RAID", do_init=False)
+                elif part["type-uuid"] == "E6D6D379-F507-44C2-A23C-238F2A3DF928":
+                    dest = _alloc_dest("LVM", do_init=False)
+                    pass
+                pass
             else:
                 # Let the partition table and "file" command determine
                 # the destination and filesystem type, if possible.
                 dest = None
                 pass
 
-            if "flags" in p:
-                for i in p["flags"]:
-                    if (f == "boot"):
+            if "flags" in part:
+                for f in part["flags"]:
+                    if (f == "boot" or f == "legacy_boot"):
                         boot = True
                         pass
                     if (dest is not None):
@@ -3215,7 +3230,7 @@ class Partitioner:
 
         # First get our fstab information in a temp file.
         work = self.getWork()
-        t = tempfile.TemporaryFile()
+        t = tempfile.TemporaryFile(mode="w+t")
         self.processWork(work, t)
 
         # Flush the current contents and re-read the partitions using
