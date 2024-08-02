@@ -99,7 +99,8 @@ def _call_mdadm(dev, cmd, opts=[]):
     return _call_cmd(["mdadm", cmd, dev] + opts)
 
 def _call_lvmcmd(cmd, opts = []):
-    return _call_cmd([cmd, ] + opts)
+    # Add -y to avoid interactive questions.
+    return _call_cmd([cmd, "-y"] + opts)
 
 def _call_lvmdispcmd(cmd, opts = []):
     opts = ["--units", "s", "--noheadings", "--nosuffix"] + opts
@@ -675,7 +676,7 @@ class LVMValue(DestValue):
         self.col = col
         p.setObj(line, col, self)
         if (self.do_init):
-            _call_lvmcmd("pvcreate", ["-ff", "-y", self.parent.parent.devname])
+            _call_lvmcmd("pvcreate", ["-ff", self.parent.parent.devname])
             self.do_init = False
             pass
         if (self.vg):
