@@ -1607,6 +1607,11 @@ class Disk(LineEntry, PartitionOwner):
             self.table = None
             pass
 
+        if devname.startswith("/dev/nvme"):
+            self.split = "p"
+        else:
+            self.split = ""
+
         line = p.lineOf(0, p.raidObj)
 
         LineEntry.__init__(self, p, devname, line,
@@ -2604,7 +2609,6 @@ def _process_partitions(p, device, partitions, devname, split, tabletype,
     line = p.lineOf(0, device) + 1
     extended = None
     for part in partitions:
-        name = devname + split + str(part["number"])
         num = int(part["number"])
         sectstart = int(part["start"].rstrip("s"))
         numsects = int(part["end"].rstrip("s")) - sectstart + 1
@@ -2746,11 +2750,15 @@ def _add_disks(p, input_fstab):
             w = l.split()
             if (w[2].startswith("sd") and not w[2].endswith(alldigits)):
                 disks.append("/dev/" + w[2])
+                pass
             elif (w[2].startswith("hd") and not w[2].endswith(alldigits)):
                 # Make sure it is actually a disk
                 if (is_a_disk(w[2])):
                     disks.append("/dev/" + w[2])
                     pass
+                pass
+            elif w[2].startswith("nvme") and 'p' not in w[2]:
+                disks.append("/dev/" + w[2])
                 pass
             elif (w[2].startswith("md") and ('p' not in w[2])):
                 # Note that the "p" above is important, we need to ignore
@@ -2781,7 +2789,8 @@ def _add_disks(p, input_fstab):
         if (partitions is None):
             continue
 
-        _process_partitions(p, disk, partitions, d, "", tabletype, fstab_info)
+        _process_partitions(p, disk, partitions, d, disk.split,
+                            tabletype, fstab_info)
         pass
 
     # Now handle the raids.
