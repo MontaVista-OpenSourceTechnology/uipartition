@@ -2531,7 +2531,11 @@ def _disk_info_from_fdisk(d):
             w = l[i].split()
             diskbytesize = int(w[4])
             w = l[i+2].split()
-            sectsize = int(w[5])
+            # For some reason this moves around.
+            try:
+                sectsize = int(w[5])
+            except:
+                sectsize = int(w[6])
             numsects = diskbytesize / sectsize
             return (numsects, sectsize, None)
         pass
