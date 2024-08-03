@@ -2609,6 +2609,7 @@ def _process_partitions(p, device, partitions, devname, split, tabletype,
     line = p.lineOf(0, device) + 1
     extended = None
     for part in partitions:
+        name = devname + split + str(part["number"])
         num = int(part["number"])
         sectstart = int(part["start"].rstrip("s"))
         numsects = int(part["end"].rstrip("s")) - sectstart + 1
